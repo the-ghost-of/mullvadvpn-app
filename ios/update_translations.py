@@ -47,9 +47,9 @@ def get_source_files():
   """
   results = []
   for root, _dirs, files in os.walk(SOURCE_PATH):
-    for file in files:
-      if check_file_extension(file, ".swift"):
-        results.append(path.join(root, file))
+    results.extend(
+        path.join(root, file) for file in files
+        if check_file_extension(file, ".swift"))
   return results
 
 
@@ -57,11 +57,10 @@ def get_strings_files(dir_path):
   """
   Find all .strings files within the given directory.
   """
-  results = []
-  for file in os.listdir(dir_path):
-    if check_file_extension(file, ".strings"):
-      results.append(file)
-  return results
+  return [
+      file for file in os.listdir(dir_path)
+      if check_file_extension(file, ".strings")
+  ]
 
 
 def create_empty_output_dir():
@@ -102,7 +101,7 @@ def extract_translations():
   if exit_code == 0:
     print("Genstrings finished without errors.")
   else:
-    print("Genstrings exited with {}: {}".format(exit_code, errors.decode().strip()))
+    print(f"Genstrings exited with {exit_code}: {errors.decode().strip()}")
 
 
 def merge_translations():
@@ -125,7 +124,7 @@ def merge_translations():
       src = path.join(GENSTRINGS_OUTPUT_PATH, table_name)
       dst = path.join(BASE_LANGUAGE_PATH, table_name)
 
-      print("Copying {} to {}".format(src, dst))
+      print(f"Copying {src} to {dst}")
       new_table = StringTable.read(src)
       new_table.write(dst, encoding=OUTPUT_ENCOODING)
 
@@ -136,7 +135,7 @@ def merge_translations():
     else:
       filepath = path.join(BASE_LANGUAGE_PATH, table_name)
 
-      print("Removing {}".format(filepath))
+      print(f"Removing {filepath}")
       os.unlink(filepath)
 
   # Merge remaining string tables
@@ -157,7 +156,7 @@ def merge_two_tables(base_table_path, new_table_path):
   # New string table generated from sources
   new_table = StringTable.read(new_table_path)
 
-  print("Merging {} into {}".format(new_table_path, base_table_path))
+  print(f"Merging {new_table_path} into {base_table_path}")
 
   # Iterate through newly generated table and preserve existing translations.
   for new_key in new_table.strings:
@@ -166,7 +165,7 @@ def merge_two_tables(base_table_path, new_table_path):
     if base_entry is not None:
       new_entry.target = base_entry.target
 
-  print("Write {} on disk.".format(base_table_path))
+  print(f"Write {base_table_path} on disk.")
   new_table.write(base_table_path, encoding=OUTPUT_ENCOODING)
 
 
@@ -175,7 +174,7 @@ def run_program(*args):
   Run program and return a tuple with returncode and errors.
   """
   with Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE) as subproc:
-    print("Run: {}".format(' '.join(args)))
+    print(f"Run: {' '.join(args)}")
 
     errors = subproc.communicate()[1]
     return (subproc.returncode, errors)

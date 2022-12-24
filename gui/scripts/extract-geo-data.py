@@ -58,14 +58,17 @@ def extract_geometry():
   }
 
   with Popen(
-    ['geo2topo', '-q', '5e3', 'geometry=-', '-o', output_path],
-    stdin=PIPE, stdout=PIPE, stderr=PIPE
-  ) as subproc:
+      ['geo2topo', '-q', '5e3', 'geometry=-', '-o', output_path],
+      stdin=PIPE, stdout=PIPE, stderr=PIPE
+    ) as subproc:
     errors = subproc.communicate(input=json.dumps(my_layer).encode())[1]
     if subproc.returncode == 0:
-      print(c.green("Extracted data to {}".format(output_path)))
+      print(c.green(f"Extracted data to {output_path}"))
     else:
-      print(c.red("geo2topo exited with {}. {}".format(subproc.returncode, errors.decode().strip())))
+      print(
+          c.red(
+              f"geo2topo exited with {subproc.returncode}. {errors.decode().strip()}"
+          ))
 
 
 def extract_provinces_and_states_lines():
@@ -86,14 +89,17 @@ def extract_provinces_and_states_lines():
   }
 
   with Popen(
-    ['geo2topo', '-q', '5e3', 'geometry=-', '-o', output_path],
-    stdin=PIPE, stdout=PIPE, stderr=PIPE
-  ) as subproc:
+      ['geo2topo', '-q', '5e3', 'geometry=-', '-o', output_path],
+      stdin=PIPE, stdout=PIPE, stderr=PIPE
+    ) as subproc:
     errors = subproc.communicate(input=json.dumps(my_layer).encode())[1]
     if subproc.returncode == 0:
-      print(c.green("Extracted data to {}".format(output_path)))
+      print(c.green(f"Extracted data to {output_path}"))
     else:
-      print(c.red("geo2topo exited with {}. {}".format(subproc.returncode, errors.decode().strip())))
+      print(
+          c.red(
+              f"geo2topo exited with {subproc.returncode}. {errors.decode().strip()}"
+          ))
 
 
 def sort_pofile_entries(pofile):
@@ -104,7 +110,7 @@ def extract_relay_translations():
   try:
     response = request_relays()
   except Exception as e:
-    print(c.red("Failed to fetch the relays list: {}".format(e)))
+    print(c.red(f"Failed to fetch the relays list: {e}"))
     raise
 
   locations = response.get("locations")
@@ -122,30 +128,30 @@ def structure_locations(locations):
     country_name = location.get("country")
     city_name = location.get("city")
 
-    if not "-" in location_key:
-      print("Location key incorrectly formatted: {}".format(location_key))
+    if "-" not in location_key:
+      print(f"Location key incorrectly formatted: {location_key}")
       continue
 
     country_code, city_code = location_key.split("-")
 
     if country_name is None:
-      print("Country name missing for {}".format(location_key))
+      print(f"Country name missing for {location_key}")
       continue
 
     if city_name is None:
-      print("City name missing for {}".format(location_key))
+      print(f"City name missing for {location_key}")
       continue
 
     if country_code not in countries:
       countries[country_code] = {"name": country_name, "cities": {}}
 
     country = countries[country_code]
-    cities = country["cities"]
     if location_key != "se-bet":
+      cities = country["cities"]
       if city_code not in cities:
         cities[city_code] = city_name
       else:
-        print("There are multiple entries for {} in {}".format(city_name, country_name))
+        print(f"There are multiple entries for {city_name} in {country_name}")
 
   return countries
 
@@ -155,7 +161,7 @@ def extract_relay_locations_pot(countries):
   pot.metadata = {"Content-Type": "text/plain; charset=utf-8"}
   output_path = path.join(LOCALE_OUT_DIR, RELAY_LOCATIONS_POT_FILENAME)
 
-  print("Generating {}".format(output_path))
+  print(f"Generating {output_path}")
 
   for country_code in countries:
     country = countries[country_code]
@@ -169,15 +175,15 @@ def extract_relay_locations_pot(countries):
     cities = country["cities"]
     for city_code in cities:
       entry = POEntry(
-        msgid=cities[city_code],
-        msgstr="",
-        comment="{} {}".format(country_code.upper(), city_code.upper())
+          msgid=cities[city_code],
+          msgstr="",
+          comment=f"{country_code.upper()} {city_code.upper()}",
       )
 
       try:
         pot.append(entry)
       except ValueError as err:
-        print(c.orange("Cannot add an entry: {}".format(err)))
+        print(c.orange(f"Cannot add an entry: {err}"))
 
   pot.save(output_path)
 
@@ -189,7 +195,8 @@ def prepare_stats_table_column(item):
 
   misses_column = c.orange(str(misses)) if misses > 0 else c.green(str(misses))
   hits_column = c.green(str(hits))
-  ratio_column = c.green(str(hits_ratio) + "%") if hits_ratio >= 80 else c.orange(str(hits_ratio))
+  ratio_column = (c.green(f"{str(hits_ratio)}%")
+                  if hits_ratio >= 80 else c.orange(str(hits_ratio)))
   total_column = str(total)
 
   return (locale, hits_column, misses_column, ratio_column, total_column)
@@ -225,7 +232,7 @@ def translate_relay_locations(countries):
   for locale in os.listdir(LOCALE_DIR):
     locale_dir = path.join(LOCALE_DIR, locale)
     if path.isdir(locale_dir):
-      print("Generating {}".format(path.join(locale, RELAY_LOCATIONS_PO_FILENAME)))
+      print(f"Generating {path.join(locale, RELAY_LOCATIONS_PO_FILENAME)}")
       (hits, misses) = translate_single_relay_locations(country_translator, city_translator, countries, locale)
       stats.append((locale, hits, misses))
 
@@ -282,7 +289,7 @@ def translate_single_relay_locations(country_translator, city_translator, countr
         translated_name = city_translator.translate(locale, split[0].strip())
 
         if translated_name is not None and len(split) > 1:
-          translated_name = "{}, {}".format(translated_name, split[1].strip())
+          translated_name = f"{translated_name}, {split[1].strip()}"
       else:
         translated_name = city_translator.translate(locale, city_name)
 
@@ -295,15 +302,15 @@ def translate_single_relay_locations(country_translator, city_translator, countr
         misses += 1
 
       entry = POEntry(
-        msgid=city_name,
-        msgstr=translated_name,
-        comment="{} {}".format(country_code.upper(), city_code.upper())
+          msgid=city_name,
+          msgstr=translated_name,
+          comment=f"{country_code.upper()} {city_code.upper()}",
       )
 
       try:
         po.append(entry)
       except ValueError as err:
-        print(c.orange("Cannot add an entry: {}".format(err)))
+        print(c.orange(f"Cannot add an entry: {err}"))
 
   po.save(output_path)
 
@@ -332,7 +339,7 @@ class CountryTranslator:
     props = self.dataset.get(iso_a2.upper())
 
     if props is not None:
-      name_key = "name_" + map_locale(locale)
+      name_key = f"name_{map_locale(locale)}"
       return props.get(name_key)
 
     return None
@@ -344,7 +351,7 @@ class CountryTranslator:
     translations lookup.
     """
     shape_path = get_shape_path("ne_50m_admin_0_countries")
-    dataset = dict()
+    dataset = {}
 
     # build a hash map of the entire datasource in memory
     with fiona.open(shape_path, "r") as source:
@@ -379,7 +386,7 @@ class CityTranslator:
     props = self.dataset.get(english_name)
 
     if props is not None:
-      name_key = "name_" + map_locale(locale)
+      name_key = f"name_{map_locale(locale)}"
       return props.get(name_key)
 
     return None
@@ -390,7 +397,7 @@ class CityTranslator:
     translations lookup.
     """
     shape_path = get_shape_path("ne_10m_populated_places")
-    dataset = dict()
+    dataset = {}
 
     # build a hash map of the entire datasource in memory
     with fiona.open(shape_path, "r") as source:
@@ -418,11 +425,11 @@ class CityTranslator:
 
 
 def get_shape_path(dataset_name):
-  return path.join(SCRIPT_DIR, dataset_name, dataset_name + ".shp")
+  return path.join(SCRIPT_DIR, dataset_name, f"{dataset_name}.shp")
 
 
 def lower_dict_keys(input_dict):
-  return dict((k.lower(), v) for k, v in input_dict.items())
+  return {k.lower(): v for k, v in input_dict.items()}
 
 
 def convert_locale_ident(locale_ident):
