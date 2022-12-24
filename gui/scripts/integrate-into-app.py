@@ -46,7 +46,7 @@ def copy_geo_assets():
     src = path.join(GENERATED_CONTENT_OUTPUT_PATH, f)
     dst = path.join(APP_GEO_ASSETS_PATH, f)
 
-    print("Copying {} to {}".format(src, dst))
+    print(f"Copying {src} to {dst}")
 
     shutil.copyfile(src, dst)
 
@@ -77,7 +77,7 @@ def merge_single_locale_folder(src, dst):
       # use existing translation to resolve conflicts
       merge_gettext_catalogues(dst_po, src_po)
     else:
-      print(c.orange("Unexpected file: {}".format(src_po)))
+      print(c.orange(f"Unexpected file: {src_po}"))
 
 
 def merge_gettext_catalogues(existing_catalogue_file, generated_catalogue_file):
@@ -100,9 +100,12 @@ def merge_gettext_catalogues(existing_catalogue_file, generated_catalogue_file):
     (exit_code, errors) = run_program("msgcat", *args)
 
     if exit_code == 0:
-      print(c.green("Merged {} into {}.".format(generated_catalogue_file, existing_catalogue_file)))
+      print(
+          c.green(
+              f"Merged {generated_catalogue_file} into {existing_catalogue_file}."
+          ))
     else:
-      print(c.red("msgcat exited with {}: {}".format(exit_code, errors.decode().strip())))
+      print(c.red(f"msgcat exited with {exit_code}: {errors.decode().strip()}"))
   else:
     print(c.orange("The existing catalogue does not exist. Copying {} to {}")
       .format(generated_catalogue_file, existing_catalogue_file))
@@ -111,7 +114,7 @@ def merge_gettext_catalogues(existing_catalogue_file, generated_catalogue_file):
 
 def run_program(*args):
   with Popen(args, stdin=PIPE, stdout=PIPE, stderr=PIPE) as subproc:
-    print("Run: {}".format(' '.join(args)))
+    print(f"Run: {' '.join(args)}")
 
     errors = subproc.communicate()[1]
     return (subproc.returncode, errors)
